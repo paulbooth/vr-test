@@ -4,7 +4,7 @@ using SocketIO;
 
 public class Network : MonoBehaviour {
 
-	public GameObject cube;
+	public GameController gc;
 	private SocketIOComponent socket;
 
 	// Use this for initialization
@@ -12,7 +12,8 @@ public class Network : MonoBehaviour {
 	{
 		socket = GetComponent<SocketIOComponent> ();
 		socket.On ("open", OnConnected);
-		socket.On ("cube", OnCubed);
+		socket.On ("zombie", OnZombie);
+		socket.Connect ();
 	}
 
 	void OnConnected(SocketIOEvent e)
@@ -21,16 +22,13 @@ public class Network : MonoBehaviour {
 //		socket.Emit ("move");
 	}
 
-	void OnCubed(SocketIOEvent e)
+	void OnZombie(SocketIOEvent e)
 	{
-		Debug.Log ("cubed.");
-		Debug.Log (e.data["size"]);
-		Debug.Log (e.data["size"].type);
-		GameObject newCube = Instantiate (cube);
-		float size = 1;
-		float.TryParse (e.data ["size"].str, out size);
-		newCube.transform.localScale = new Vector3 (size, size, size);
+		float number = 1;
+		float.TryParse (e.data ["number"].str, out number);
+		gc.SpawnZombieWaves ( (int) number, 0, 0.5f, 0, 1);
 	}
+
 	// Update is called once per frame
 	void Update () {
 	

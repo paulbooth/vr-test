@@ -31,8 +31,7 @@ public class GameController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		StartCoroutine (SpawnZombieWaves ());
-
+//		SpawnZombieWaves (zombieCount, startWait, spawnWait, waveWait, 0);
 	}
 
 	// Update is called once per frame
@@ -44,10 +43,17 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
-	IEnumerator SpawnZombieWaves ()
+	public void SpawnZombieWaves (int zombieCount, float startWait, float spawnWait, float waveWait, int numWaves)
+	{
+		StartCoroutine (SpawnZombieWavesRoutine (zombieCount, startWait, spawnWait, waveWait, numWaves));
+	}
+
+	IEnumerator SpawnZombieWavesRoutine (int zombieCount, float startWait, float spawnWait, float waveWait, int numWaves)
 	{
 		yield return new WaitForSeconds (startWait);
-		while (true) {
+		int waveCount = 0;
+		while (numWaves == 0 || waveCount < numWaves) {
+			waveCount++;
 			for (int i = 0; i < zombieCount; i++) {
 				SpawnZombie ();
 				yield return new WaitForSeconds (spawnWait);
@@ -56,8 +62,7 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
-	private void SpawnZombie() {
-		Debug.Log ("Spawning a zombie");
+	public void SpawnZombie() {
 		bool xDir = Random.value > 0.5f;
 		float wallDistance = Random.value > 0.5f ? wallLength: -wallLength;
 		float wallPosition = Random.Range (-wallLength, wallLength);

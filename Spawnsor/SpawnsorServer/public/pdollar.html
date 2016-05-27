@@ -1,0 +1,264 @@
+<html>
+<head>
+<script src = 'js/lib/pdollar.js'></script>
+<script>
+
+    //
+    // Startup
+    //
+    var isDown, points, strokeId, recognizer, c, canvasRect; // global variables
+    function onLoadEvent()
+    {
+      points = new Array(); // point array for current stroke
+      strokeId = 0;
+      recognizer = new PDollarRecognizer();
+
+      var canvas = document.getElementById('myCanvas');
+      c = canvas.getContext('2d');
+      c.lineWidth = 3;
+      c.font = "16px Gentilis";
+      console.log(canvas)
+      canvasRect = getCanvasRect(canvas); // canvas rect on page
+      c.fillStyle = "rgb(255,255,136)";
+      c.fillRect(0, 0, canvasRect.width, 20);
+
+      isDown = false;
+    }
+    function getCanvasRect(canvas)
+    {
+      var w = canvas.width;
+      var h = canvas.height;
+
+      var cx = canvas.offsetLeft;
+      var cy = canvas.offsetTop;
+      while (canvas.offsetParent != null)
+      {
+        canvas = canvas.offsetParent;
+        cx += canvas.offsetLeft;
+        cy += canvas.offsetTop;
+      }
+      return {x: cx, y: cy, width: w, height: h};
+    }
+    function getScrollY()
+    {
+      var scrollY = 0;
+      if (typeof(document.body.parentElement) != 'undefined')
+      {
+        scrollY = document.body.parentElement.scrollTop; // IE
+      }
+      else if (typeof(window.pageYOffset) != 'undefined')
+      {
+        scrollY = window.pageYOffset; // FF
+      }
+      return scrollY;
+    }
+    //
+    // Mouse Events
+    //
+    function mouseDownEvent(x, y, button)
+    {
+      document.onselectstart = function() { return false; } // disable drag-select
+      document.onmousedown = function() { return false; } // disable drag-select
+      if (button <= 1)
+      {
+        isDown = true;
+        x -= canvasRect.x;
+        y -= canvasRect.y - getScrollY();
+        if (strokeId == 0) // starting a new gesture
+        {
+          points.length = 0;
+          c.clearRect(0, 0, canvasRect.width, canvasRect.height);
+        }
+        points[points.length] = new Point(x, y, ++strokeId);
+        drawText("Recording stroke #" + strokeId + "...");
+        var clr = "rgb(" + rand(0,200) + "," + rand(0,200) + "," + rand(0,200) + ")";
+        c.strokeStyle = clr;
+        c.fillStyle = clr;
+        c.fillRect(x - 4, y - 3, 9, 9);
+      }
+      else if (button == 2)
+      {
+        drawText("Recognizing gesture...");
+      }
+    }
+    function mouseMoveEvent(x, y, button)
+    {
+      if (isDown)
+      {
+        x -= canvasRect.x;
+        y -= canvasRect.y - getScrollY();
+        points[points.length] = new Point(x, y, strokeId); // append
+        drawConnectedPoint(points.length - 2, points.length - 1);
+      }
+    }
+    function mouseUpEvent(x, y, button)
+    {
+      document.onselectstart = function() { return true; } // enable drag-select
+      document.onmousedown = function() { return true; } // enable drag-select
+      if (button <= 1)
+      {
+        if (isDown)
+        {
+          isDown = false;
+          drawText("Stroke #" + strokeId + " recorded.");
+        }
+      }
+      else if (button == 2) // segmentation with right-click
+      {
+        if (points.length >= 10)
+        {
+          var result = recognizer.Recognize(points);
+          drawText("Result: " + result.Name + " (" + round(result.Score,2) + ").");
+        }
+        else
+        {
+          drawText("Too little input made. Please try again.");
+        }
+        strokeId = 0; // signal to begin new gesture on next mouse-down
+      }
+    }
+    function drawConnectedPoint(from, to)
+    {
+      c.beginPath();
+      c.moveTo(points[from].X, points[from].Y);
+      c.lineTo(points[to].X, points[to].Y);
+      c.closePath();
+      c.stroke();
+    }
+    function drawText(str)
+    {
+      c.fillStyle = "rgb(255,255,136)";
+      c.fillRect(0, 0, canvasRect.width, 20);
+      c.fillStyle = "rgb(0,0,255)";
+      c.fillText(str, 1, 14);
+    }
+    function rand(low, high)
+    {
+      return Math.floor((high - low + 1) * Math.random()) + low;
+    }
+    function round(n, d) // round 'n' to 'd' decimals
+    {
+      d = Math.pow(10, d);
+      return Math.round(n * d) / d
+    }
+    //
+    // Multistroke Adding and Clearing
+    //
+    function onClickAddExisting()
+    {
+      if (points.length >= 10)
+      {
+        var pointclouds = document.getElementById('pointclouds');
+        var name = pointclouds[pointclouds.selectedIndex].value;
+        var num = recognizer.AddGesture(name, points);
+        drawText("\"" + name + "\" added. Number of \"" + name + "\"s defined: " + num + ".");
+        strokeId = 0; // signal to begin new gesture on next mouse-down
+      }
+    }
+    function onClickAddCustom()
+    {
+      var name = document.getElementById('custom').value;
+      if (points.length >= 10 && name.length > 0)
+      {
+        var num = recognizer.AddGesture(name, points);
+        drawText("\"" + name + "\" added. Number of \"" + name + "\"s defined: " + num + ".");
+        strokeId = 0; // signal to begin new gesture on next mouse-down
+      }
+    }
+    function onClickCustom()
+    {
+      document.getElementById('custom').select();
+    }
+    function onClickDelete()
+    {
+      var num = recognizer.DeleteUserGestures(); // deletes any user-defined templates
+      alert("All user-defined gestures have been deleted. Only the 1 predefined gesture remains for each of the " + num + " types.");
+      strokeId = 0; // signal to begin new gesture on next mouse-down
+    }
+    function onClickClearStrokes()
+    {
+      points.length = 0;
+      strokeId = 0;
+      c.clearRect(0, 0, canvasRect.width, canvasRect.height);
+      drawText("Canvas cleared.");
+    }
+
+</script>
+</head>
+<body onload="onLoadEvent()">
+  <table border="0" cellspacing="10">
+    <tbody><tr>
+      <td valign="top">
+        <img src="http://depts.washington.edu/aimgroup/proj/dollar/multistrokes.gif"><br>
+      </td>
+      <td valign="top" align="left">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tbody><tr>
+            <td valign="bottom">
+              <p style="font-size:10pt"><i>Make strokes on this canvas.
+              <b><u>Right-click</u> the canvas to recognize.</b>
+              If a misrecognition occurs, add the mis- recognized gesture
+              as an example of the intended gesture.</i>
+              </p>
+            </td>
+          </tr>
+        </tbody></table>
+
+        <canvas id="myCanvas" width="420" height="400" style="background-color:#dddddd" onmousedown="mouseDownEvent(event.clientX, event.clientY, event.button)" onmousemove="mouseMoveEvent(event.clientX, event.clientY, event.button)" onmouseup="mouseUpEvent(event.clientX, event.clientY, event.button)" oncontextmenu="return false;">
+          <span style="background-color:#ffff88;">The &lt;canvas&gt; element is not supported by this browser.</span>
+        </canvas>
+
+        <!--<p align="center" style="margin-top:10em;margin-bottom:10em"><i>Canvas coming soon...</i></p>-->
+
+        <!-- Editing area below stroking canvas area -->
+        <table border="0" width="420" style="font-size:10pt">
+          <tbody>
+          <tr>
+            <td></td>
+            <td></td>
+            <td valign="top" align="right">
+              <input type="button" style="width:64px;" value=" Clear  " onclick="onClickClearStrokes()">
+            </td>
+          </tr>
+          <tr>
+            <td valign="top" align="left">Add as example of existing type:</td>
+            <td valign="top" align="right">
+              <select id="pointclouds" style="width:136px" onkeypress="if (event.keyCode == 13) onClickAddExisting()">
+                <option selected="" value="T">T</option>
+                <option value="N">N</option>
+                <option value="D">D</option>
+                <option value="P">P</option>
+                <option value="X">X</option>
+                <option value="H">H</option>
+                <option value="I">I</option>
+                <option value="exclamation">exclamation</option>
+                <option value="line">line</option>
+                <option value="five-point star">five-point star</option>
+                <option value="null">null</option>
+                <option value="arrowhead">arrowhead</option>
+                <option value="pitchfork">pitchfork</option>
+                <option value="six-point star">six-point star</option>
+                <option value="asterisk">asterisk</option>
+                <option value="half-note">half-note</option>
+              </select>
+            </td>
+            <td valign="top" align="right"><input type="button" style="width:64px" value="  Add   " onclick="onClickAddExisting()"></td>
+          </tr>
+          <tr>
+            <td valign="top" align="left">Add as example of custom type:</td>
+            <td valign="top" align="right"><input type="text" id="custom" style="width:130px" value="Type name here..." onclick="onClickCustom()" onkeypress="if (event.keyCode == 13) onClickAddCustom()"></td>
+            <td valign="top" align="right"><input type="button" style="width:64px" value="  Add   " onclick="onClickAddCustom()"></td>
+          </tr>
+          <tr>
+            <td valign="top" align="left">Delete all user-defined gestures:</td>
+            <td valign="top" align="right">&nbsp;</td>
+            <td valign="top" align="right"><input type="button" style="width:64px" value="Delete" onclick="onClickDelete()"></td>
+          </tr>
+        </tbody></table>
+        <!-- End of editing area below stroking canvas area -->
+      </td>
+    </tr>
+  </tbody>
+  </table>
+</body>
+</html>

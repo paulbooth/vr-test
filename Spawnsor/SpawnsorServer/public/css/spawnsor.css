@@ -1,0 +1,38 @@
+* {
+  padding: 0;
+  margin:0;
+}
+
+#canvas{
+  cursor: crosshair;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
+
+#clear{
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  z-index: 100;
+}
+
+#shape {
+  display: block;
+  position: absolute;
+  bottom: 5px;
+  right: 100px;
+  z-index: 10;
+  font-size: 20px;
+}
+
+.overlay {
+  height:0px;
+  overflow:visible;
+  pointer-events:none;
+  background:none !important;
+}
+
+.no-pointer-events {
+  pointer-events:none;
+}

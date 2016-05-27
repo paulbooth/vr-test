@@ -37,7 +37,6 @@ public class ZombieController : MonoBehaviour {
 	}
 
 	void OnJointBreak(float breakForce) {
-		Debug.Log("A joint has just been broken!, force: " + breakForce);
 		navigator.StopTracking ();
 		headAttached = false;
 		GameObject head = fixedJoint.connectedBody.gameObject;
