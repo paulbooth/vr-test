@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using SocketIO;
 
 public class Network : MonoBehaviour {
@@ -32,7 +33,13 @@ public class Network : MonoBehaviour {
 
 	void OnSpawn(SocketIOEvent e)
 	{
-		gc.SpawnDrawnObject (e.data ["name"].str);
+		List<JSONObject> color = e.data ["color"].list;
+		Color spawnColor = new Color (color[0].n, color[1].n, color[2].n);
+		Debug.Log (e.data ["color"]);
+		Debug.Log (color[0]);
+		Debug.Log (color[1]);
+		Debug.Log (color[2]);
+		gc.SpawnDrawnObject (e.data ["name"].str, spawnColor);
 	}
 
 	// Update is called once per frame

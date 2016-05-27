@@ -33,7 +33,6 @@ function onMouseDown(e) {
   var point = getPoint(e, ++strokeId);
   points.push(point);
 
-  color = [rand(0,200), rand(0,200), rand(0,200)];
   var clr = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
   c.strokeStyle = clr;
   c.fillStyle = clr;
@@ -99,6 +98,7 @@ function clear() {
   strokeId = 0;
   lastResult = null;
   c.clearRect(0,0,canvas.width,canvas.height);
+  color = [rand(0,200), rand(0,200), rand(0,200)];
   updateShapeButton();
   updateClearText();
 }
@@ -117,7 +117,11 @@ function getNumberOfZombiesToSpawn() {
 
 function spawnDrawnObject() {
   if (lastResult) {
-    socket.emit('spawn', {'name': lastResult.Name});
+    var normalColor = color.map(function(val) { return val / 255; });
+    socket.emit('spawn', {
+      'name': lastResult.Name,
+      'color': normalColor
+    });
   }
   clear();
 }

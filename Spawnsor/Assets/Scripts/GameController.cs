@@ -85,33 +85,37 @@ public class GameController : MonoBehaviour {
 		return zombieTarget.position + Vector3.up * 2;
 	}
 
-	public void SpawnCube ()
+	public void SpawnCube (Color color)
 	{
-		GameObject cubeClone = SpawnGameObject (cube);
+		GameObject cubeClone = SpawnGameObject (cube, color);
 	}
 
-	public void SpawnSphere ()
+	public void SpawnSphere (Color color)
 	{
-		GameObject sphereClone = SpawnGameObject (sphere);
+		GameObject sphereClone = SpawnGameObject (sphere, color);
 	}
 
-	public GameObject SpawnGameObject(GameObject go)
+	public GameObject SpawnGameObject(GameObject go, Color color)
 	{
 		GameObject clone = Instantiate (go, getPlayerSpawnObjectPosition (), Quaternion.identity) as GameObject;
 		ShrinkAndDestroy sad = clone.AddComponent<ShrinkAndDestroy> ();
 		sad.delayTime = playerObjectShrinkTime;
 		sad.explosion = playerObjectExplosion;
+
+		MeshRenderer renderer = clone.GetComponent<MeshRenderer>();
+		renderer.material.color = color;
+
 		return clone;
 	}
 
-	public void SpawnDrawnObject(string name)
+	public void SpawnDrawnObject(string name, Color color)
 	{
 		switch (name.ToLower ()) {
 		case "square":
-			SpawnCube ();
+			SpawnCube (color);
 			break;
 		case "circle":
-			SpawnSphere ();
+			SpawnSphere (color);
 			break;
 		default:
 			Debug.Log ("Unknown drawn object: " + name);
