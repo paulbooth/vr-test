@@ -18,6 +18,21 @@ public class GameController : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 //		StartCoroutine (SpawnBoxWaves ());
+
+		Client client = new Client(url);
+
+		client.Opened += SocketOpened;
+		client.Message += SocketMessage;
+		client.SocketConnectionClosed += SocketConnectionClosed;
+		client.Error +=SocketError;
+
+		client.Connect();
+
+	}
+
+	private void SocketOpened(object sender, MessageEventArgs e) {
+		//invoke when socket opened
+		Debug.Log("WHAO");
 	}
 	
 	// Update is called once per frame

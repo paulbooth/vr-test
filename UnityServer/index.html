@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Spawnsor</title>
+  </head>
+  <body>
+    <input id="size" autocomplete="off" value="5" type="number">
+    <button id="cube">Cube it</button>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      var socket = io();
+      $('#cube').click(function(){
+        socket.emit('cube', $('#size').val());
+      });
+
+      socket.on('chat message', function(msg){
+          $('#messages').append($('<li>').text(msg));
+        });
+    </script>
+  </body>
+</html>
