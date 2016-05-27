@@ -52,11 +52,24 @@ function drawConnectedPoint(from, to) {
   c.stroke();
 }
 
+function getPointsSaveString() {
+  var s = 'this.PointClouds.push(new PointCloud(name, new Array(';
+  points.forEach(function(p, i) {
+    s += '\n\tnew Point(' + p.X + ', ' + p.Y +', ' + p.ID + ')';
+    if (i < points.length - 1) {
+      s += ',';
+    }
+  });
+  s += '\n)));'
+  return s;
+}
+
 function onMouseUp(e) {
   if (isDown) {
     isDown = false;
     var result = recognizer.Recognize(points);
     console.log(result);
+    console.log(getPointsSaveString());
     if (result.Score > RECOGNIZE_THRESHOLD) {
       $('#shape').text(result.Name + ": (" + result.Score.toFixed(3) + ")");
     }
@@ -64,16 +77,17 @@ function onMouseUp(e) {
 }
 
 function clear() {
+  $('#shape').text('');
   points.length = 0;
   strokeId = 0;
   c.clearRect(0,0,canvas.width,canvas.height);
 }
 
 (function init() {
-  canvas = document.getElementById('canvas')
+  canvas = document.getElementById('canvas');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  c = canvas.getContext('2d')
+  c = canvas.getContext('2d');
   isDown = false;
   points = new Array();
   strokeId = 0;
