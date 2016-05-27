@@ -17,7 +17,7 @@ app.get('/', function(req, res){
 io.on('connection', function(socket){
   console.log('connected');
   socket.on('zombie', function(msg){
-    console.log('message: ' + msg);
+    console.log('ZOMBIE!', msg);
     io.emit('zombie', msg);
   });
 

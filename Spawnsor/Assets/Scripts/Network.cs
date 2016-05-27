@@ -24,9 +24,7 @@ public class Network : MonoBehaviour {
 
 	void OnZombie(SocketIOEvent e)
 	{
-		float number = 1;
-		float.TryParse (e.data ["number"].str, out number);
-		gc.SpawnZombieWaves ( (int) number, 0, 0.5f, 0, 1);
+		gc.SpawnZombieWaves ( (int) e.data ["number"].n, 0, 0.5f, 0, 1);
 	}
 
 	// Update is called once per frame

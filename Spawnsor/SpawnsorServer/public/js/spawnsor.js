@@ -1,6 +1,9 @@
 
 $(function onload() {
 var RECOGNIZE_THRESHOLD = 0.25;
+var NUM_POINTS_TO_ZOMBIE = 90;
+
+var socket;
 
 var canvas, c;
 var isDown, points, strokeId, recognizer;
@@ -34,6 +37,7 @@ function onMouseDown(e) {
   c.strokeStyle = clr;
   c.fillStyle = clr;
   c.fillRect(point.X - 4, point.Y - 4, 9, 9);
+  updateClearText();
 }
 
 function onMouseMove(e) {
@@ -41,6 +45,9 @@ function onMouseMove(e) {
     var point = getPoint(e, strokeId);
     points.push(point);
     drawConnectedPoint(points.length - 2, points.length - 1);
+    if (points.length % NUM_POINTS_TO_ZOMBIE == 0) {
+      updateClearText();
+    }
   }
 }
 
@@ -79,8 +86,28 @@ function onMouseUp(e) {
 function clear() {
   $('#shape').text('');
   points.length = 0;
+  if (strokeId > 0) {
+    socket.emit('zombie', {'number': getNumberOfZombiesToSpawn()});
+  }
   strokeId = 0;
   c.clearRect(0,0,canvas.width,canvas.height);
+  updateClearText();
+}
+
+function updateClearText() {
+  var text = 'Clear';
+  if (strokeId > 0) {
+    text += ' (' + getNumberOfZombiesToSpawn() + ')';
+  }
+  $('#clear').text(text);
+}
+
+function getNumberOfZombiesToSpawn() {
+  return strokeId + Math.floor(points.length / NUM_POINTS_TO_ZOMBIE);
+}
+
+function spawnDrawnObject(name) {
+  socket.emit('spawn', {'name': name});
 }
 
 (function init() {
@@ -98,6 +125,8 @@ function clear() {
   $(canvas).mouseup(onMouseUp);
 
   $('#clear').click(clear);
+
+  socket = io();
 })();
 
 });
