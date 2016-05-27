@@ -8,6 +8,7 @@ public class GameController : MonoBehaviour {
 	public GameObject cube;
 	public GameObject sphere;
 	public GameObject playerObjectExplosion;
+	public float playerObjectShrinkTime = 5f;
 
 	public Transform zombieTarget;
 	public float wallLength = 10;
@@ -98,7 +99,7 @@ public class GameController : MonoBehaviour {
 	{
 		GameObject clone = Instantiate (go, getPlayerSpawnObjectPosition (), Quaternion.identity) as GameObject;
 		ShrinkAndDestroy sad = clone.AddComponent<ShrinkAndDestroy> ();
-		sad.delayTime = 10f;
+		sad.delayTime = playerObjectShrinkTime;
 		sad.explosion = playerObjectExplosion;
 		return clone;
 	}
