@@ -5,7 +5,11 @@ using System.Collections;
 public class GameController : MonoBehaviour {
 
 	public GameObject zombie;
-	public Transform target;
+	public GameObject cube;
+	public GameObject sphere;
+	public GameObject playerObjectExplosion;
+
+	public Transform zombieTarget;
 	public float wallLength = 10;
 	public float spawnHeight = 1;
 
@@ -72,6 +76,45 @@ public class GameController : MonoBehaviour {
 			xDir ? wallDistance : wallPosition
 		);
 		GameObject zombieClone = Instantiate (zombie, spawnPosition, Quaternion.identity) as GameObject;
-		zombieClone.GetComponent<NavigateObject> ().tracked = target;
+		zombieClone.GetComponent<NavigateObject> ().tracked = zombieTarget;
+	}
+
+	private Vector3 getPlayerSpawnObjectPosition()
+	{
+		return zombieTarget.position + Vector3.up * 2;
+	}
+
+	public void SpawnCube ()
+	{
+		GameObject cubeClone = SpawnGameObject (cube);
+	}
+
+	public void SpawnSphere ()
+	{
+		GameObject sphereClone = SpawnGameObject (sphere);
+	}
+
+	public GameObject SpawnGameObject(GameObject go)
+	{
+		GameObject clone = Instantiate (go, getPlayerSpawnObjectPosition (), Quaternion.identity) as GameObject;
+		ShrinkAndDestroy sad = clone.AddComponent<ShrinkAndDestroy> ();
+		sad.delayTime = 10f;
+		sad.explosion = playerObjectExplosion;
+		return clone;
+	}
+
+	public void SpawnDrawnObject(string name)
+	{
+		switch (name.ToLower ()) {
+		case "square":
+			SpawnCube ();
+			break;
+		case "circle":
+			SpawnSphere ();
+			break;
+		default:
+			Debug.Log ("Unknown drawn object: " + name);
+			break;
+		}
 	}
 }

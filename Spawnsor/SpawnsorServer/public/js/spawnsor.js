@@ -6,7 +6,7 @@ var NUM_POINTS_TO_ZOMBIE = 90;
 var socket;
 
 var canvas, c;
-var isDown, points, strokeId, recognizer;
+var isDown, points, strokeId, recognizer, lastResult, color;
 
 
 function rand(low, high) {
@@ -33,7 +33,8 @@ function onMouseDown(e) {
   var point = getPoint(e, ++strokeId);
   points.push(point);
 
-  var clr = "rgb(" + rand(0,200) + "," + rand(0,200) + "," + rand(0,200) + ")";
+  color = [rand(0,200), rand(0,200), rand(0,200)];
+  var clr = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
   c.strokeStyle = clr;
   c.fillStyle = clr;
   c.fillRect(point.X - 4, point.Y - 4, 9, 9);
@@ -74,12 +75,18 @@ function getPointsSaveString() {
 function onMouseUp(e) {
   if (isDown) {
     isDown = false;
-    var result = recognizer.Recognize(points);
-    console.log(result);
-    console.log(getPointsSaveString());
-    if (result.Score > RECOGNIZE_THRESHOLD) {
-      $('#shape').text(result.Name + ": (" + result.Score.toFixed(3) + ")");
-    }
+    lastResult = recognizer.Recognize(points);
+    // console.log(lastResult);
+    // console.log(getPointsSaveString());
+    updateShapeButton();
+  }
+}
+
+function updateShapeButton() {
+  if (lastResult && lastResult.Score > RECOGNIZE_THRESHOLD) {
+    $('#shape').show().text('Send ' + lastResult.Name + ': (' + lastResult.Score.toFixed(3) + ')');
+  } else {
+    $('#shape').text('').hide();
   }
 }
 
@@ -90,7 +97,9 @@ function clear() {
     socket.emit('zombie', {'number': getNumberOfZombiesToSpawn()});
   }
   strokeId = 0;
+  lastResult = null;
   c.clearRect(0,0,canvas.width,canvas.height);
+  updateShapeButton();
   updateClearText();
 }
 
@@ -106,8 +115,11 @@ function getNumberOfZombiesToSpawn() {
   return strokeId + Math.floor(points.length / NUM_POINTS_TO_ZOMBIE);
 }
 
-function spawnDrawnObject(name) {
-  socket.emit('spawn', {'name': name});
+function spawnDrawnObject() {
+  if (lastResult) {
+    socket.emit('spawn', {'name': lastResult.Name});
+  }
+  clear();
 }
 
 (function init() {
@@ -117,14 +129,16 @@ function spawnDrawnObject(name) {
   c = canvas.getContext('2d');
   isDown = false;
   points = new Array();
-  strokeId = 0;
   recognizer = new PDollarRecognizer();
+
+  clear();
 
   $(canvas).mousedown(onMouseDown);
   $(canvas).mousemove(onMouseMove);
   $(canvas).mouseup(onMouseUp);
 
   $('#clear').click(clear);
+  $('#shape').click(spawnDrawnObject);
 
   socket = io();
 })();

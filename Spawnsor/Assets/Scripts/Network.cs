@@ -11,9 +11,12 @@ public class Network : MonoBehaviour {
 	void Start ()
 	{
 		socket = GetComponent<SocketIOComponent> ();
-		socket.On ("open", OnConnected);
-		socket.On ("zombie", OnZombie);
-		socket.Connect ();
+		if (socket) {
+			socket.On ("open", OnConnected);
+			socket.On ("zombie", OnZombie);
+			socket.On ("spawn", OnSpawn);
+			socket.Connect ();
+		}
 	}
 
 	void OnConnected(SocketIOEvent e)
@@ -25,6 +28,11 @@ public class Network : MonoBehaviour {
 	void OnZombie(SocketIOEvent e)
 	{
 		gc.SpawnZombieWaves ( (int) e.data ["number"].n, 0, 0.5f, 0, 1);
+	}
+
+	void OnSpawn(SocketIOEvent e)
+	{
+		gc.SpawnDrawnObject (e.data ["name"].str);
 	}
 
 	// Update is called once per frame

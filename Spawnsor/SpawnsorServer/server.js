@@ -21,9 +21,10 @@ io.on('connection', function(socket){
     io.emit('zombie', msg);
   });
 
-  socket.on('move', function(msg){
-    console.log('move', msg);
-  })
+  socket.on('spawn', function(msg){
+    console.log('spawn object!', msg);
+    io.emit('spawn', msg);
+  });
 });
 
 
