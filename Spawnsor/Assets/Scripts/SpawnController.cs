@@ -10,7 +10,7 @@ public class SpawnController : MonoBehaviour {
 	public GameObject sphere;
 	public GameObject gun;
 	public GameObject playerObjectExplosion;
-	public float playerObjectShrinkTime = 5f;
+	public float playerObjectLiveTime = 5f;
 
 	public Transform zombieTarget;
 	public float wallLength = 10;
@@ -65,14 +65,14 @@ public class SpawnController : MonoBehaviour {
 		return zombieTarget.position + Vector3.up * 2;
 	}
 
-	public GameObject SpawnKnownGameObject(GameObject go, Color color, float sizeX, float sizeY, float explodeTime)
+	public GameObject SpawnKnownGameObject(GameObject go, Color color, float sizeX, float sizeY, float liveTime)
 	{
 		GameObject clone = Instantiate (go, getPlayerSpawnObjectPosition (), Quaternion.identity) as GameObject;
 		clone.transform.localScale = Vector3.Scale(clone.transform.localScale, new Vector3(sizeX, sizeY, sizeX));
-		if (explodeTime > 0) {
-			ShrinkAndDestroy sad = clone.AddComponent<ShrinkAndDestroy> ();
-			sad.delayTime = explodeTime;
-			sad.explosion = playerObjectExplosion;
+		if (liveTime > 0) {
+			FadeAndDestroy fad = clone.AddComponent<FadeAndDestroy> ();
+			fad.delayTime = liveTime;
+			fad.explosion = playerObjectExplosion;
 		}
 
 		NVRInteractableItem interactableItem = clone.GetComponent<NVRInteractableItem> ();
@@ -95,6 +95,7 @@ public class SpawnController : MonoBehaviour {
 
 	public void SpawnCustomObject(JSONObject data, Color color) {
 		Debug.Log ("spawning custom object");
+
 	}
 
 	public void SpawnDrawnObject(JSONObject data)
@@ -109,13 +110,13 @@ public class SpawnController : MonoBehaviour {
 
 		switch (name.ToLower ()) {
 		case "square":
-			SpawnKnownGameObject (cube, color, sizeX, sizeY, playerObjectShrinkTime);
+			SpawnKnownGameObject (cube, color, sizeX, sizeY, playerObjectLiveTime);
 			break;
 		case "circle":
-			SpawnKnownGameObject (sphere, color, sizeX, sizeY, playerObjectShrinkTime);
+			SpawnKnownGameObject (sphere, color, sizeX, sizeY, playerObjectLiveTime);
 			break;
 		case "gun":
-			SpawnKnownGameObject (gun, color, sizeX, sizeY, playerObjectShrinkTime * 3);
+			SpawnKnownGameObject (gun, color, sizeX, sizeY, playerObjectLiveTime * 3);
 			break;
 		case "custom":
 			SpawnCustomObject (data, color);
