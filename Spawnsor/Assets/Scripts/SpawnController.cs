@@ -81,9 +81,16 @@ public class SpawnController : MonoBehaviour {
 		sad.explosion = playerObjectExplosion;
 
 		MeshRenderer renderer = clone.GetComponent<MeshRenderer>();
-		renderer.material.color = color;
+        if (!renderer)
+        {
+            renderer = clone.GetComponentInChildren<MeshRenderer>();
+        }
+        if (renderer)
+        {
+            renderer.material.color = color;
+        }
 
-		return clone;
+        return clone;
 	}
 
 	public void SpawnDrawnObject(JSONObject data)

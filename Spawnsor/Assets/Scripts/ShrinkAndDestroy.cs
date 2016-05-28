@@ -29,7 +29,14 @@ public class ShrinkAndDestroy : MonoBehaviour {
 				Detonator d = exp.GetComponent<Detonator> ();
 				if (d) {
 					MeshRenderer renderer = GetComponent<MeshRenderer>();
-					d.color = renderer.material.color;
+                    if (!renderer)
+                    {
+                        renderer = GetComponentInChildren<MeshRenderer>();
+                    }
+                    if (renderer)
+                    {
+                        d.color = renderer.material.color;
+                    }
 				}
 			}
 		}
