@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using NewtonVR;
 
 public class SpawnController : MonoBehaviour {
 
@@ -72,6 +73,11 @@ public class SpawnController : MonoBehaviour {
 			ShrinkAndDestroy sad = clone.AddComponent<ShrinkAndDestroy> ();
 			sad.delayTime = explodeTime;
 			sad.explosion = playerObjectExplosion;
+		}
+
+		NVRInteractableItem interactableItem = clone.GetComponent<NVRInteractableItem> ();
+		if (!interactableItem) {
+			clone.AddComponent<NVRInteractableItem> ();
 		}
 
 		MeshRenderer renderer = clone.GetComponent<MeshRenderer>();
