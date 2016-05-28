@@ -13,14 +13,6 @@ function rand(low, high) {
   return Math.floor((high - low + 1) * Math.random()) + low;
 }
 
-function getPos(e){
-  var offset=$(canvas).offset()
-  return {
-    x:e.pageX-offset.left,
-    y:e.pageY-offset.top,
-  }
-}
-
 function getPoint(e, strokeId) {
   var offset=$(canvas).offset()
   return new Point(e.pageX-offset.left,
@@ -126,6 +118,51 @@ function spawnDrawnObject() {
   clear();
 }
 
+
+function onTouchStart(e) {
+  e.preventDefault();
+  var touch = e.touches[0];
+  var mouseEvent = new MouseEvent("mousedown", {
+    clientX: touch.clientX,
+    clientY: touch.clientY
+  });
+  canvas.dispatchEvent(mouseEvent);
+}
+
+function onTouchMove(e) {
+  e.preventDefault();
+  var touch = e.touches[0];
+  var mouseEvent = new MouseEvent("mousemove", {
+    clientX: touch.clientX,
+    clientY: touch.clientY
+  });
+  canvas.dispatchEvent(mouseEvent);
+}
+
+function onTouchEnd(e) {
+  e.preventDefault();
+  var mouseEvent = new MouseEvent("mouseup", {});
+  canvas.dispatchEvent(mouseEvent);
+}
+
+function preventDocumentMobileScroll() {
+  document.body.addEventListener("touchstart", function (e) {
+    if (e.target == canvas) {
+      e.preventDefault();
+    }
+  }, false);
+  document.body.addEventListener("touchend", function (e) {
+    if (e.target == canvas) {
+      e.preventDefault();
+    }
+  }, false);
+  document.body.addEventListener("touchmove", function (e) {
+    if (e.target == canvas) {
+      e.preventDefault();
+    }
+  }, false);
+}
+
 (function init() {
   canvas = document.getElementById('canvas');
   canvas.width = window.innerWidth;
@@ -140,6 +177,12 @@ function spawnDrawnObject() {
   $(canvas).mousedown(onMouseDown);
   $(canvas).mousemove(onMouseMove);
   $(canvas).mouseup(onMouseUp);
+
+  canvas.addEventListener("touchstart", onTouchStart, false);
+  canvas.addEventListener("touchmove", onTouchMove, false);
+  canvas.addEventListener("touchend", onTouchEnd, false);
+
+  preventDocumentMobileScroll();
 
   $('#clear').click(clear);
   $('#shape').click(spawnDrawnObject);

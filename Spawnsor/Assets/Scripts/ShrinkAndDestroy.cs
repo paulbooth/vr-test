@@ -25,7 +25,12 @@ public class ShrinkAndDestroy : MonoBehaviour {
 			transform.localScale -= Vector3.one * rate * Time.deltaTime;
 			if (transform.localScale.x <= destroyCutoff) {
 				Destroy (toDestroy);
-				Instantiate (explosion, transform.position, transform.rotation);
+				GameObject exp = Instantiate (explosion, transform.position, transform.rotation) as GameObject;
+				Detonator d = exp.GetComponent<Detonator> ();
+				if (d) {
+					MeshRenderer renderer = GetComponent<MeshRenderer>();
+					d.color = renderer.material.color;
+				}
 			}
 		}
 	}

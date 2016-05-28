@@ -26,6 +26,11 @@
   font-size: 20px;
 }
 
+#title {
+  margin-top: 10px;
+  margin-left: 10px;
+}
+
 .overlay {
   height:0px;
   overflow:visible;
