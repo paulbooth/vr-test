@@ -67,8 +67,8 @@ function onMouseUp(e) {
   if (isDown) {
     isDown = false;
     lastResult = recognizer.Recognize(points);
-    // console.log(lastResult);
-    // console.log(getPointsSaveString());
+    console.log(lastResult);
+    console.log(getPointsSaveString());
     updateShapeButton();
   }
 }
