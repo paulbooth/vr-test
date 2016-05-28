@@ -10,6 +10,8 @@ public class ShrinkAndDestroy : MonoBehaviour {
 	public GameObject toDestroy;
 
 	private float startTime;
+	private Vector3 shrinkVector;
+	private float shrinkX, shrinkY, shrinkZ;
 
 	// Use this for initialization
 	void Start () {
@@ -17,12 +19,17 @@ public class ShrinkAndDestroy : MonoBehaviour {
 		if (toDestroy == null) {
 			toDestroy = gameObject;
 		}
+		shrinkVector = new Vector3 (
+			rate * transform.localScale.x,
+			rate * transform.localScale.y,
+			rate * transform.localScale.z
+		);
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (Time.time > startTime + delayTime) {
-			transform.localScale -= Vector3.one * rate * Time.deltaTime;
+			transform.localScale -= shrinkVector * Time.deltaTime;
 			if (transform.localScale.x <= destroyCutoff) {
 				Destroy (toDestroy);
 				GameObject exp = Instantiate (explosion, transform.position, transform.rotation) as GameObject;
