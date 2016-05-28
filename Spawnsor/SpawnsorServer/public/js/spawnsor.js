@@ -110,9 +110,27 @@ function getNumberOfZombiesToSpawn() {
 function spawnDrawnObject() {
   if (lastResult) {
     var normalColor = color.map(function(val) { return val / 255; });
+    var maxX = -Infinity, maxY = -Infinity, minX = Infinity, minY = Infinity;
+    points.forEach(function(point) {
+      if (point.X > maxX) {
+        maxX = point.X;
+      }
+      if (point.X < minX) {
+        minX = point.X;
+      }
+      if (point.Y > maxY) {
+        maxY = point.Y;
+      }
+      if (point.Y < minY) {
+        minY = point.Y;
+      }
+    });
     socket.emit('spawn', {
       'name': lastResult.Name,
-      'color': normalColor
+      'color': normalColor,
+      // size is calibrated to give a max 2 times usual height, square scaled
+      'sizeX': (maxX - minX)/canvas.height * 2,
+      'sizeY': (maxY - minY)/canvas.height * 2
     });
   }
   clear();
