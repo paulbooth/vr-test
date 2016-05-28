@@ -42,10 +42,10 @@ public class ZombieController : MonoBehaviour {
 		GameObject head = fixedJoint.connectedBody.gameObject;
 		ShrinkAndDestroy headShrink = head.AddComponent<ShrinkAndDestroy> ();
 		headShrink.explosion = headExplosion;
-		headShrink.rate = 0.3f;
+		headShrink.rate = 0.25f + Random.value * 0.1f;
 		headShrink.toDestroy = transform.parent.gameObject;
 		ShrinkAndDestroy bodyShrink = gameObject.AddComponent<ShrinkAndDestroy> ();
 		bodyShrink.explosion = bodyExplosion;
-		bodyShrink.rate = 0.8f;
+		bodyShrink.rate = 0.75f + Random.value * 0.1f;
 	}
 }
