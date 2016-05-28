@@ -15,6 +15,7 @@ public class Network : MonoBehaviour {
 			socket.On ("open", OnConnected);
 			socket.On ("zombie", OnZombie);
 			socket.On ("spawn", OnSpawn);
+			socket.On ("spawn custom", OnSpawnCustom);
 			socket.Connect ();
 		}
 	}
@@ -32,5 +33,10 @@ public class Network : MonoBehaviour {
 	void OnSpawn(SocketIOEvent e)
 	{
 		spawnController.SpawnDrawnObject (e.data);
+	}
+
+	void OnSpawnCustom(SocketIOEvent e)
+	{
+		spawnController.SpawnCustomObject (e.data);
 	}
 }

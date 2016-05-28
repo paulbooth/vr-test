@@ -93,7 +93,7 @@ public class SpawnController : MonoBehaviour {
         return clone;
 	}
 
-	public void SpawnCustomObject(JSONObject data, Color color) {
+	public void SpawnCustomObject(JSONObject data) {
 		Debug.Log ("spawning custom object");
 
 	}
@@ -117,9 +117,6 @@ public class SpawnController : MonoBehaviour {
 			break;
 		case "gun":
 			SpawnKnownGameObject (gun, color, sizeX, sizeY, playerObjectLiveTime * 3);
-			break;
-		case "custom":
-			SpawnCustomObject (data, color);
 			break;
 		default:
 			Debug.LogError ("Unknown drawn object: " + name);

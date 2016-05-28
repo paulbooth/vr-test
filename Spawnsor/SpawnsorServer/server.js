@@ -25,6 +25,10 @@ io.on('connection', function(socket){
     console.log('spawn object!', msg);
     io.emit('spawn', msg);
   });
+  socket.on('spawn custom', function(msg){
+    console.log('CUSTOM SPAWN', msg);
+    io.emit('spawn custom', msg);
+  });
 });
 
 

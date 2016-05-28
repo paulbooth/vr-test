@@ -83,10 +83,11 @@ function updateShapeButton() {
 
 function clear() {
   $('#shape').text('');
-  points.length = 0;
-  if (strokeId > 0) {
-    socket.emit('zombie', {'number': getNumberOfZombiesToSpawn()});
+  var numZombies = getNumberOfZombiesToSpawn();
+  if (numZombies > 0) {
+    socket.emit('zombie', {'number': numZombies});
   }
+  points.length = 0;
   strokeId = 0;
   lastResult = null;
   c.clearRect(0,0,canvas.width,canvas.height);
@@ -97,8 +98,9 @@ function clear() {
 
 function updateClearText() {
   var text = 'Clear';
-  if (strokeId > 0) {
-    text += ' (' + getNumberOfZombiesToSpawn() + ')';
+  var numZombies = getNumberOfZombiesToSpawn();
+  if (numZombies > 0) {
+    text += ' (' + numZombies + ')';
   }
   $('#clear').text(text);
 }
@@ -107,9 +109,128 @@ function getNumberOfZombiesToSpawn() {
   return strokeId + Math.floor(points.length / NUM_POINTS_TO_ZOMBIE);
 }
 
+function toXYPoint(point) {
+  return {
+    X: point.X,
+    Y: point.Y
+  };
+}
+
+function toXYPoints(points) {
+  return points.map(toXYPoint);
+}
+
+function spawnJunk() {
+  socket.emit('spawn custom', {
+    'color': getNormalizedColor(),
+    'points': toXYPoints(points),
+    'corners': toXYPoints(getMeshCorners())
+  });
+  clear();
+}
+
+function vector(x, y){
+  return new Point(x, y, 0)
+}
+
+function delta(a, b){
+  return vector(a.X - b.X, a.Y - b.Y)
+}
+
+function angle(d){
+  return Math.atan((1.0*d.Y)/d.X)
+}
+
+function angle_between(a, b){
+  return Math.acos((a.X*b.X + a.Y*b.Y)/(len(a)*len(b)))
+}
+
+function len(v){
+  return Math.sqrt(v.X*v.X + v.Y*v.Y)
+}
+
+function unit(c){
+  var l=len(c)
+  return vector(c.X/len(c), c.Y/len(c))
+}
+
+function scale(c, f){
+  return vector(c.X*f, c.Y*f)
+}
+
+function add(a, b){
+  return vector(a.X+b.X, a.Y+b.Y)
+}
+
+function rotate(v, a){
+  return vector(  v.X*Math.cos(a) - v.Y*Math.sin(a),
+          v.X*Math.sin(a) + v.Y*Math.cos(a))
+}
+
+function average(l){
+  var X=0
+  var Y=0
+  for (var i=0; i<l.length; i++){X+=l[i].X; Y+=l[i].Y}
+  return vector(X/l.length, Y/l.length)
+}
+
+function getMeshCorners() {
+  var corners = [points[0]];
+  var n = 0
+  var t = 0
+  var lastCorner = points[0];
+  for (var i=1; i<points.length-2; i++){
+
+    var pt=points[i+1]
+    var d=delta(lastCorner, points[i-1])
+
+    if (len(d)>10 && n>1){
+      ac=delta(points[i-1], pt)
+      if (Math.abs(angle_between(ac, d)) > Math.PI/8 || n<100){
+        pt.indeX=i
+        corners.push(pt)
+        lastCorner=pt
+        n=0
+        t=0
+      }
+    }
+    n++
+  }
+
+  corners.push(points[points.length-1])
+  corners.push(points[0])
+
+  // var oldFill = c.fillStyle;
+  // var oldStroke = c.strokeStyle;
+
+  // c.strokeStyle = 'rgb(0,0,0)';
+  // c.fillStyle = 'rgba(0, 255, 255, 0.3)';
+  // c.beginPath();
+  // c.moveTo(corners[0].X, corners[0].Y);
+  // for (var i = 1; i < corners.length; i++){
+  //   c.lineTo(corners[i].X, corners[i].Y);
+  // }
+  // c.stroke();
+  // c.fill();
+
+  // c.fillStyle='rgba(255, 0, 0, 0.5)'
+  // for (var i=0; i<corners.length; i++){
+  //   c.beginPath();
+  //   c.arc(corners[i].X, corners[i].Y, 4, 0, 2*Math.PI, false);
+  //   c.fill();
+  // }
+  // c.fillStyle = oldFill;
+
+  // console.log(corners);
+  return corners;
+}
+
+function getNormalizedColor() {
+  return color.map(function(val) { return val / 255; });
+}
+
 function spawnDrawnObject() {
   if (lastResult) {
-    var normalColor = color.map(function(val) { return val / 255; });
     var maxX = -Infinity, maxY = -Infinity, minX = Infinity, minY = Infinity;
     points.forEach(function(point) {
       if (point.X > maxX) {
@@ -127,7 +248,7 @@ function spawnDrawnObject() {
     });
     socket.emit('spawn', {
       'name': lastResult.Name,
-      'color': normalColor,
+      'color': getNormalizedColor(),
       // size is calibrated to give a max 2 times usual height, square scaled
       'sizeX': (maxX - minX)/canvas.height * 2,
       'sizeY': (maxY - minY)/canvas.height * 2
@@ -204,6 +325,7 @@ function preventDocumentMobileScroll() {
 
   $('#clear').click(clear);
   $('#shape').click(spawnDrawnObject);
+  $('#junk').click(spawnJunk);
 
   socket = io();
 })();
