@@ -9,6 +9,7 @@ public class SpawnController : MonoBehaviour {
 	public GameObject cube;
 	public GameObject sphere;
 	public GameObject gun;
+	public GameObject sword;
 	public GameObject playerObjectExplosion;
 	public Material customObjectMaterial;
 	public float playerObjectLiveTime = 5f;
@@ -255,6 +256,9 @@ public class SpawnController : MonoBehaviour {
 			break;
 		case "circle":
 			SpawnKnownGameObject (sphere, color, sizeX, sizeY, playerObjectLiveTime);
+			break;
+		case "sword":
+			SpawnKnownGameObject (sword, color, sizeX, sizeY, playerObjectLiveTime);
 			break;
 		case "gun":
 			SpawnKnownGameObject (gun, color, sizeX, sizeY, playerObjectLiveTime * 3);
