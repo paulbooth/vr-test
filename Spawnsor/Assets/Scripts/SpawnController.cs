@@ -12,6 +12,7 @@ public class SpawnController : MonoBehaviour {
 	public GameObject playerObjectExplosion;
 	public Material customObjectMaterial;
 	public float playerObjectLiveTime = 5f;
+	public float extrusionDepth = 2;
 
 	public Transform zombieTarget;
 	public float wallLength = 10;
@@ -27,7 +28,6 @@ public class SpawnController : MonoBehaviour {
 		if (zombieCount > 0) {
 			SpawnZombieWaves (zombieCount, startWait, spawnWait, waveWait, 0);
 		}
-		SpawnCustomObject ();
 	}
 
 	public void SpawnZombieWaves (int zombieCount, float startWait, float spawnWait, float waveWait, int numWaves)
@@ -71,242 +71,171 @@ public class SpawnController : MonoBehaviour {
 	{
 		GameObject clone = Instantiate (go, getPlayerSpawnObjectPosition (), Quaternion.identity) as GameObject;
 		clone.transform.localScale = Vector3.Scale(clone.transform.localScale, new Vector3(sizeX, sizeY, sizeX));
+
+		TurnIntoPlayerMadeObject (clone, color, liveTime);
+        return clone;
+	}
+
+	public void TurnIntoPlayerMadeObject(GameObject go, Color color, float liveTime)
+	{
 		if (liveTime > 0) {
-			FadeAndDestroy fad = clone.AddComponent<FadeAndDestroy> ();
+			FadeAndDestroy fad = go.AddComponent<FadeAndDestroy> ();
 			fad.delayTime = liveTime;
 			fad.explosion = playerObjectExplosion;
 		}
 
-		NVRInteractableItem interactableItem = clone.GetComponent<NVRInteractableItem> ();
+		NVRInteractableItem interactableItem = go.GetComponent<NVRInteractableItem> ();
 		if (!interactableItem) {
-			clone.AddComponent<NVRInteractableItem> ();
+			go.AddComponent<NVRInteractableItem> ();
 		}
 
-		MeshRenderer renderer = clone.GetComponent<MeshRenderer>();
-        if (!renderer)
-        {
-            renderer = clone.GetComponentInChildren<MeshRenderer>();
-        }
-        if (renderer)
-        {
-            renderer.material.color = color;
-        }
+		MeshRenderer renderer = go.GetComponent<MeshRenderer>();
+		if (!renderer)
+		{
+			renderer = go.GetComponentInChildren<MeshRenderer>();
+		}
+		if (renderer)
+		{
+			renderer.material.color = color;
+		}
 
-        return clone;
+		go.transform.position = getPlayerSpawnObjectPosition ();
+		go.tag = "PlayerCreated";
 	}
 
-	public void SpawnCustomObject(JSONObject data) {
+	private Vector2[] GetVectorsFromJSON(List<JSONObject> data)
+	{
+		Vector2[] points = new Vector2[data.Count];
+		for (int i = 0; i < data.Count; i++) {
+			points [i] = new Vector2 (data [i] ["X"].n, data [i] ["Y"].n);
+		}
+		return points;
 	}
-	public void SpawnCustomObject() {
+
+	public void SpawnCustomObject(JSONObject data)
+	{
+		Vector2[] points = GetVectorsFromJSON (data ["points"].list);
+		Vector2[] colliderPoints = GetVectorsFromJSON (data ["corners"].list);
+		SpawnCustomObject (points, colliderPoints, getColorFromJSON(data));
+	}
+
+	public void SpawnCustomObject(Vector2[] points)
+	{
+		SpawnCustomObject (points, points, Color.cyan);
+	}
+
+	public void SpawnCustomObject(Vector2[] points, Vector2[] colliderPoints, Color color)
+	{
 		Debug.Log ("spawning custom object");
+
 		GameObject go = new GameObject ();
 		MeshFilter filter = go.AddComponent<MeshFilter>();
-		filter.mesh = ExtrudeMeshFromPoints ();
+		filter.mesh = ExtrudeMeshFromPoints (points);
 
 		go.name = "Junk";
-		go.tag = "PlayerCreated";
 		go.AddComponent<Rigidbody> ();
 		MeshRenderer r = go.AddComponent<MeshRenderer> ();
 		r.material = customObjectMaterial;
 		MeshCollider col = go.AddComponent<MeshCollider> ();
-		col.sharedMesh = ExtrudeMeshFromPoints ();
+		col.sharedMesh = ExtrudeMeshFromPoints (colliderPoints);
 		col.convex = true;
-		go.transform.position = new Vector3 (0, 1, 0);
+
+		TurnIntoPlayerMadeObject (go, color, playerObjectLiveTime);
 	}
 
-	public Mesh ExtrudeMeshFromPoints ()
+	public Mesh ExtrudeMeshFromPoints (Vector2[] points2d)
 	{
 		Mesh mesh = new Mesh ();
-		float height = 1f;
-		float bottomRadius = .25f;
-		float topRadius = .05f;
-		int nbSides = 18;
-		int nbHeightSeg = 1; // Not implemented yet
 
-		int nbVerticesCap = nbSides + 1;
-		#region Vertices
+		Vector3[] vertices = new Vector3[4 * points2d.Length];
 
-		// bottom + top + sides
-		Vector3[] vertices = new Vector3[nbVerticesCap + nbVerticesCap + nbSides * nbHeightSeg * 2 + 2];
-		int vert = 0;
-		float _2pi = Mathf.PI * 2f;
-
-		// Bottom cap
-		vertices[vert++] = new Vector3(0f, 0f, 0f);
-		while( vert <= nbSides )
-		{
-			float rad = (float)vert / nbSides * _2pi;
-			vertices[vert] = new Vector3(Mathf.Cos(rad) * bottomRadius, 0f, Mathf.Sin(rad) * bottomRadius);
-			vert++;
+		// Vertex list
+		for (int i = 0; i < points2d.Length; i++) {
+			Vector2 point = points2d[i];
+			vertices[2 * i] = new Vector3(point.x, point.y, 0);
+			vertices[2 * i + 1] = new Vector3(point.x, point.y, extrusionDepth);
+		}
+		// Gotta reuse points for top and bottom. UV mapping and normals differs for the repeats.
+		int topPtOffset = 2 * points2d.Length;
+		int bottomPtOffset = 3 * points2d.Length;
+		for (int i = 0; i < points2d.Length; i++) {
+			Vector2 point = points2d[i];
+			vertices[topPtOffset + i] = new Vector3(point.x, point.y, 0); // top
+			vertices[bottomPtOffset + i] = new Vector3(point.x, point.y, extrusionDepth); // bottom
+		}
+		int j = 0;
+		foreach (Vector3 v in vertices) {
+			j++;
 		}
 
-		// Top cap
-		vertices[vert++] = new Vector3(0f, height, 0f);
-		while (vert <= nbSides * 2 + 1)
-		{
-			float rad = (float)(vert - nbSides - 1)  / nbSides * _2pi;
-			vertices[vert] = new Vector3(Mathf.Cos(rad) * topRadius, height, Mathf.Sin(rad) * topRadius);
-			vert++;
+		// Triangle corner indices into vertex list
+		// 1 rectangle for each edge = 2 triangles = 6 points
+		// Also triangles for the cylinder top and bottom
+		int sideTriPts = 6 * (points2d.Length);
+		int topTriPts = 3 * (points2d.Length - 2);
+		int[] triangles = new int[sideTriPts + 2 * (topTriPts)];
+		// sides
+		for (int i = 0; i < points2d.Length; i++) {
+			triangles[6 * i + 0] = (2 * i + 0) % topPtOffset;
+			triangles[6 * i + 1] = (2 * i + 2) % topPtOffset;
+			triangles[6 * i + 2] = (2 * i + 1) % topPtOffset;
+
+			triangles[6 * i + 3] = (2 * i + 2) % topPtOffset;
+			triangles[6 * i + 4] = (2 * i + 3) % topPtOffset;
+			triangles[6 * i + 5] = (2 * i + 1) % topPtOffset;
+		}
+		// top and bottom
+		for (int i = 0; i < points2d.Length - 2; i++) {
+			triangles[sideTriPts + 3 * i + 0] = topPtOffset + 0; // Every triangle on top uses this vertex
+			triangles[sideTriPts + 3 * i + 1] = topPtOffset + i + 2;
+			triangles[sideTriPts + 3 * i + 2] = topPtOffset + i + 1;
+
+			triangles[sideTriPts + topTriPts + 3 * i + 0] = bottomPtOffset + 0; // Every triangle on bottom uses this vertex
+			triangles[sideTriPts + topTriPts + 3 * i + 1] = bottomPtOffset + i + 1;
+			triangles[sideTriPts + topTriPts + 3 * i + 2] = bottomPtOffset + i + 2;
+		}
+		j = 0;
+		int k = 0;
+		foreach (int t in triangles) {
+//			Debug.Log (k.ToString() + ":"+ j.ToString() + "-" + t.ToString());
+			j = (j + 1) % 3;
+			if (j == 0)
+				k++;
 		}
 
-		// Sides
-		int v = 0;
-		while (vert <= vertices.Length - 4 )
-		{
-			float rad = (float)v / nbSides * _2pi;
-			vertices[vert] = new Vector3(Mathf.Cos(rad) * topRadius, height, Mathf.Sin(rad) * topRadius);
-			vertices[vert + 1] = new Vector3(Mathf.Cos(rad) * bottomRadius, 0, Mathf.Sin(rad) * bottomRadius);
-			vert+=2;
-			v++;
+		// UVs (texture mapping points) - Just half-assing for now. Easy to improve later!
+		Vector2[] uv = new Vector2[vertices.Length];
+		for (int i = 0; i < topPtOffset; i += 2) {
+			uv[i + 0] = new Vector2((float)i/topPtOffset, 0);
+			uv[i + 1] = new Vector2((float)i/topPtOffset, 1);
 		}
-		vertices[vert] = vertices[ nbSides * 2 + 2 ];
-		vertices[vert + 1] = vertices[nbSides * 2 + 3 ];
-		#endregion
-
-		#region Normales
-
-		// bottom + top + sides
-		Vector3[] normales = new Vector3[vertices.Length];
-		vert = 0;
-
-		// Bottom cap
-		while( vert  <= nbSides )
-		{
-			normales[vert++] = Vector3.down;
+		for (int i = topPtOffset; i < bottomPtOffset; i++) {
+			uv[i] = new Vector2(0,0);
+		}
+		for (int i = bottomPtOffset; i < vertices.Length; i++) {
+			uv[i] = new Vector2(0,0);
 		}
 
-		// Top cap
-		while( vert <= nbSides * 2 + 1 )
-		{
-			normales[vert++] = Vector3.up;
-		}
-
-		// Sides
-		v = 0;
-		while (vert <= vertices.Length - 4 )
-		{			
-			float rad = (float)v / nbSides * _2pi;
-			float cos = Mathf.Cos(rad);
-			float sin = Mathf.Sin(rad);
-
-			normales[vert] = new Vector3(cos, 0f, sin);
-			normales[vert+1] = normales[vert];
-
-			vert+=2;
-			v++;
-		}
-		normales[vert] = normales[ nbSides * 2 + 2 ];
-		normales[vert + 1] = normales[nbSides * 2 + 3 ];
-		#endregion
-
-		#region UVs
-		Vector2[] uvs = new Vector2[vertices.Length];
-
-		// Bottom cap
-		int u = 0;
-		uvs[u++] = new Vector2(0.5f, 0.5f);
-		while (u <= nbSides)
-		{
-			float rad = (float)u / nbSides * _2pi;
-			uvs[u] = new Vector2(Mathf.Cos(rad) * .5f + .5f, Mathf.Sin(rad) * .5f + .5f);
-			u++;
-		}
-
-		// Top cap
-		uvs[u++] = new Vector2(0.5f, 0.5f);
-		while (u <= nbSides * 2 + 1)
-		{
-			float rad = (float)u / nbSides * _2pi;
-			uvs[u] = new Vector2(Mathf.Cos(rad) * .5f + .5f, Mathf.Sin(rad) * .5f + .5f);
-			u++;
-		}
-
-		// Sides
-		int u_sides = 0;
-		while (u <= uvs.Length - 4 )
-		{
-			float t = (float)u_sides / nbSides;
-			uvs[u] = new Vector3(t, 1f);
-			uvs[u + 1] = new Vector3(t, 0f);
-			u += 2;
-			u_sides++;
-		}
-		uvs[u] = new Vector2(1f, 1f);
-		uvs[u + 1] = new Vector2(1f, 0f);
-		#endregion 
-
-		#region Triangles
-		int nbTriangles = nbSides + nbSides + nbSides*2;
-		int[] triangles = new int[nbTriangles * 3 + 3];
-
-		// Bottom cap
-		int tri = 0;
-		int i = 0;
-		while (tri < nbSides - 1)
-		{
-			triangles[ i ] = 0;
-			triangles[ i+1 ] = tri + 1;
-			triangles[ i+2 ] = tri + 2;
-			tri++;
-			i += 3;
-		}
-		triangles[i] = 0;
-		triangles[i + 1] = tri + 1;
-		triangles[i + 2] = 1;
-		tri++;
-		i += 3;
-
-		// Top cap
-		//tri++;
-		while (tri < nbSides*2)
-		{
-			triangles[ i ] = tri + 2;
-			triangles[i + 1] = tri + 1;
-			triangles[i + 2] = nbVerticesCap;
-			tri++;
-			i += 3;
-		}
-
-		triangles[i] = nbVerticesCap + 1;
-		triangles[i + 1] = tri + 1;
-		triangles[i + 2] = nbVerticesCap;		
-		tri++;
-		i += 3;
-		tri++;
-
-		// Sides
-		while( tri <= nbTriangles )
-		{
-			triangles[ i ] = tri + 2;
-			triangles[ i+1 ] = tri + 1;
-			triangles[ i+2 ] = tri + 0;
-			tri++;
-			i += 3;
-
-			triangles[ i ] = tri + 1;
-			triangles[ i+1 ] = tri + 2;
-			triangles[ i+2 ] = tri + 0;
-			tri++;
-			i += 3;
-		}
-		#endregion
-
+		// Assign to mesh
 		mesh.vertices = vertices;
-		mesh.normals = normales;
-		mesh.uv = uvs;
 		mesh.triangles = triangles;
-
+		mesh.RecalculateNormals ();
+		mesh.uv = uv;
 		mesh.RecalculateBounds();
 		mesh.Optimize();
 
 		return mesh;
 	}
 
-	public void SpawnDrawnObject(JSONObject data)
+	private Color getColorFromJSON(JSONObject data)
 	{
 		List<JSONObject> colorData = data ["color"].list;
-		Color color = new Color (colorData[0].n, colorData[1].n, colorData[2].n);
+		return new Color (colorData[0].n, colorData[1].n, colorData[2].n);
+	}
 
+	public void SpawnDrawnObject(JSONObject data)
+	{
+		Color color = getColorFromJSON (data);
 		float sizeX = data ["sizeX"].n;
 		float sizeY = data ["sizeY"].n;
 

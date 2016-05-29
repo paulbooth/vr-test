@@ -106,13 +106,13 @@ function updateClearText() {
 }
 
 function getNumberOfZombiesToSpawn() {
-  return strokeId + Math.floor(points.length / NUM_POINTS_TO_ZOMBIE);
+  return 0; //strokeId + Math.floor(points.length / NUM_POINTS_TO_ZOMBIE);
 }
 
 function toXYPoint(point) {
   return {
-    X: point.X,
-    Y: point.Y
+    X: point.X / canvas.height,
+    Y: point.Y / canvas.height
   };
 }
 

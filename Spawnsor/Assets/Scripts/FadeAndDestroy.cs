@@ -39,7 +39,6 @@ public class FadeAndDestroy : MonoBehaviour {
 				Color color = renderer.material.color;
 				color.a -= rate * Time.deltaTime;
 				renderer.material.color = color;
-				Debug.Log (renderer.material.color.a);
 				destroy = renderer.material.color.a <= destroyCutoff;
 			}
 
