@@ -109,15 +109,31 @@ function getNumberOfZombiesToSpawn() {
   return 0; //strokeId + Math.floor(points.length / NUM_POINTS_TO_ZOMBIE);
 }
 
-function toXYPoint(point) {
+function getCentroid(points)
+{
+  var x = 0.0, y = 0.0;
+  for (var i = 0; i < points.length; i++) {
+    x += points[i].X;
+    y += points[i].Y;
+  }
+  x /= points.length;
+  y /= points.length;
+  return new Point(x, y, 0);
+}
+
+function toXYPoint(point, centroid) {
   return {
-    X: point.X / canvas.height,
-    Y: (canvas.height - point.Y) / canvas.height
+    X: (point.X - centroid.X) / canvas.height * 10,
+    Y: (centroid.Y - point.Y) / canvas.height * 10 // invert Y
   };
 }
 
 function toXYPoints(points) {
-  return points.map(toXYPoint);
+  var centroid = getCentroid(points);
+  console.log("centroid", centroid)
+  return points.map(function(point) {
+    return toXYPoint(point, centroid);
+  });
 }
 
 function spawnJunk() {
@@ -198,7 +214,7 @@ function getMeshCorners() {
   }
 
   corners.push(points[points.length-1])
-  corners.push(points[0])
+  // corners.push(points[0])
 
   // var oldFill = c.fillStyle;
   // var oldStroke = c.strokeStyle;

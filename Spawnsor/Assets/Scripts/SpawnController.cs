@@ -114,7 +114,7 @@ public class SpawnController : MonoBehaviour {
 
 	public void SpawnCustomObject(JSONObject data)
 	{
-		Vector2[] points = GetVectorsFromJSON (data ["points"].list);
+		Vector2[] points = GetVectorsFromJSON (data ["corners"].list);
 		Vector2[] colliderPoints = GetVectorsFromJSON (data ["corners"].list);
 		SpawnCustomObject (points, colliderPoints, getColorFromJSON(data));
 	}
@@ -140,7 +140,25 @@ public class SpawnController : MonoBehaviour {
 		col.sharedMesh = ExtrudeMeshFromPoints (colliderPoints);
 		col.convex = true;
 
-		TurnIntoPlayerMadeObject (go, color, playerObjectLiveTime);
+		TurnIntoPlayerMadeObject (go, color, 0);
+	}
+
+	public int[] GetReverseTriangles(int[] indices, int offset)
+	{
+		int[] newIndices = new int[indices.Length];
+		for (int i = 0; i < indices.Length; i += 3) {
+			newIndices [i] = indices [i] + offset;
+			newIndices [i + 1] = indices [i + 2] + offset;
+			newIndices [i + 2] = indices [i + 1] + offset;
+		}
+		return newIndices;
+	}
+
+	private bool ShouldFlipPerimeter(int[] triangles, int vectorCount) {
+		return
+			(triangles[0] - triangles[1]) % vectorCount == 1 ||
+			(triangles[1] - triangles[2]) % vectorCount == 1 ||
+			(triangles[2] - triangles[0]) % vectorCount == 1;
 	}
 
 	public Mesh ExtrudeMeshFromPoints (Vector2[] points2d)
@@ -150,78 +168,68 @@ public class SpawnController : MonoBehaviour {
 		Vector3[] vertices = new Vector3[4 * points2d.Length];
 
 		// Vertex list
+		int sideOffset = 0; //2 * points2d.Length;
 		for (int i = 0; i < points2d.Length; i++) {
 			Vector2 point = points2d[i];
-			vertices[2 * i] = new Vector3(point.x, point.y, 0);
-			vertices[2 * i + 1] = new Vector3(point.x, point.y, extrusionDepth);
-		}
-		// Gotta reuse points for top and bottom. UV mapping and normals differs for the repeats.
-		int topPtOffset = 2 * points2d.Length;
-		int bottomPtOffset = 3 * points2d.Length;
-		for (int i = 0; i < points2d.Length; i++) {
-			Vector2 point = points2d[i];
-			vertices[topPtOffset + i] = new Vector3(point.x, point.y, 0); // top
-			vertices[bottomPtOffset + i] = new Vector3(point.x, point.y, extrusionDepth); // bottom
-		}
-		int j = 0;
-		foreach (Vector3 v in vertices) {
-			j++;
+			vertices[i] = new Vector3(point.x, point.y, 0);
+			vertices[points2d.Length + i] = new Vector3(point.x, point.y, extrusionDepth);
+			vertices[sideOffset + i] = new Vector3(point.x, point.y, 0);
+			vertices[sideOffset + points2d.Length + i] = new Vector3(point.x, point.y, extrusionDepth);
 		}
 
-		// Triangle corner indices into vertex list
-		// 1 rectangle for each edge = 2 triangles = 6 points
-		// Also triangles for the cylinder top and bottom
-		int sideTriPts = 6 * (points2d.Length);
-		int topTriPts = 3 * (points2d.Length - 2);
-		int[] triangles = new int[sideTriPts + 2 * (topTriPts)];
-		// sides
-		for (int i = 0; i < points2d.Length; i++) {
-			triangles[6 * i + 0] = (2 * i + 0) % topPtOffset;
-			triangles[6 * i + 1] = (2 * i + 2) % topPtOffset;
-			triangles[6 * i + 2] = (2 * i + 1) % topPtOffset;
+		Triangulator tr = new Triangulator(points2d);
+		int[] backIndices = tr.Triangulate();
+		int[] topIndices = GetReverseTriangles (backIndices, points2d.Length);
 
-			triangles[6 * i + 3] = (2 * i + 2) % topPtOffset;
-			triangles[6 * i + 4] = (2 * i + 3) % topPtOffset;
-			triangles[6 * i + 5] = (2 * i + 1) % topPtOffset;
-		}
-		// top and bottom
-		for (int i = 0; i < points2d.Length - 2; i++) {
-			triangles[sideTriPts + 3 * i + 0] = topPtOffset + 0; // Every triangle on top uses this vertex
-			triangles[sideTriPts + 3 * i + 1] = topPtOffset + i + 2;
-			triangles[sideTriPts + 3 * i + 2] = topPtOffset + i + 1;
+		int[] sideIndices = new int[6 * points2d.Length];
 
-			triangles[sideTriPts + topTriPts + 3 * i + 0] = bottomPtOffset + 0; // Every triangle on bottom uses this vertex
-			triangles[sideTriPts + topTriPts + 3 * i + 1] = bottomPtOffset + i + 1;
-			triangles[sideTriPts + topTriPts + 3 * i + 2] = bottomPtOffset + i + 2;
+//		 sides
+		for (int i = 0; i < points2d.Length - 1; i++) {
+			sideIndices[6 * i + 0] = sideOffset + i;
+			sideIndices[6 * i + 1] = sideOffset + i + 1;
+			sideIndices[6 * i + 2] = sideOffset + points2d.Length + i;
+
+			sideIndices[6 * i + 3] = sideOffset + points2d.Length + i;
+			sideIndices[6 * i + 4] = sideOffset + i + 1;
+			sideIndices[6 * i + 5] = sideOffset + points2d.Length + i + 1;
 		}
-		j = 0;
-		int k = 0;
-		foreach (int t in triangles) {
-//			Debug.Log (k.ToString() + ":"+ j.ToString() + "-" + t.ToString());
-			j = (j + 1) % 3;
-			if (j == 0)
-				k++;
+		sideIndices[sideIndices.Length - 6] = sideOffset + points2d.Length - 1;
+		sideIndices[sideIndices.Length - 5] = sideOffset + 0;
+		sideIndices[sideIndices.Length - 4] = sideOffset + 2 * points2d.Length - 1;
+
+		sideIndices[sideIndices.Length - 3] = sideOffset + 2 * points2d.Length - 1;
+		sideIndices[sideIndices.Length - 2] = sideOffset + 0;
+		sideIndices[sideIndices.Length - 1] = sideOffset + points2d.Length;
+
+		if (ShouldFlipPerimeter (sideIndices, points2d.Length)) {
+			sideIndices = GetReverseTriangles (sideIndices, 0);
 		}
 
-		// UVs (texture mapping points) - Just half-assing for now. Easy to improve later!
-		Vector2[] uv = new Vector2[vertices.Length];
-		for (int i = 0; i < topPtOffset; i += 2) {
-			uv[i + 0] = new Vector2((float)i/topPtOffset, 0);
-			uv[i + 1] = new Vector2((float)i/topPtOffset, 1);
-		}
-		for (int i = topPtOffset; i < bottomPtOffset; i++) {
-			uv[i] = new Vector2(0,0);
-		}
-		for (int i = bottomPtOffset; i < vertices.Length; i++) {
-			uv[i] = new Vector2(0,0);
-		}
+		// put it all together
+		int[] triangles = new int[topIndices.Length + backIndices.Length + sideIndices.Length];
+		topIndices.CopyTo(triangles, 0);
+		backIndices.CopyTo(triangles, topIndices.Length);
+		sideIndices.CopyTo(triangles, topIndices.Length + backIndices.Length);
 
-		// Assign to mesh
+
+
+//		// UVs (texture mapping points) - Just half-assing for now. Easy to improve later!
+//		Vector2[] uv = new Vector2[vertices.Length];
+//		for (int i = 0; i < topPtOffset; i += 2) {
+//			uv[i + 0] = new Vector2((float)i/topPtOffset, 0);
+//			uv[i + 1] = new Vector2((float)i/topPtOffset, 1);
+//		}
+//		for (int i = topPtOffset; i < bottomPtOffset; i++) {
+//			uv[i] = new Vector2(0,0);
+//		}
+//		for (int i = bottomPtOffset; i < vertices.Length; i++) {
+//			uv[i] = new Vector2(0,0);
+//		}
+
 		mesh.vertices = vertices;
 		mesh.triangles = triangles;
 		mesh.RecalculateNormals ();
-		mesh.uv = uv;
-		mesh.RecalculateBounds();
+//		mesh.uv = uv;
 		mesh.Optimize();
 
 		return mesh;

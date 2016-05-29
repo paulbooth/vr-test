@@ -12,7 +12,7 @@ public class FadeAndDestroy : MonoBehaviour {
 
 	private float startTime;
 	private float shrinkX, shrinkY, shrinkZ;
-
+	private bool setToFade = false;
 
 	// Use this for initialization
 	void Start () {
@@ -30,17 +30,27 @@ public class FadeAndDestroy : MonoBehaviour {
 			bool destroy = false;
 			if (!renderer) {
 				foreach (MeshRenderer r in GetComponentsInChildren<MeshRenderer>()) {
+					if (!setToFade) {
+						r.material.EnableKeyword ("_ALPHABLEND_ON");
+						r.material.SetFloat ("_Mode", 2f);
+					}
 					Color color = r.material.color;
 					color.a -= rate * Time.deltaTime;
 					r.material.color = color;
 					destroy = r.material.color.a <= destroyCutoff;
 				}
 			} else {
+				if (!setToFade) {
+					renderer.material.EnableKeyword ("_ALPHABLEND_ON");
+					renderer.material.SetFloat ("_Mode", 2f);
+				}
 				Color color = renderer.material.color;
 				color.a -= rate * Time.deltaTime;
+//				Debug.Log (color.a);
 				renderer.material.color = color;
 				destroy = renderer.material.color.a <= destroyCutoff;
 			}
+			setToFade = true;
 
 			if (destroy) {
 				Destroy (toDestroy);
