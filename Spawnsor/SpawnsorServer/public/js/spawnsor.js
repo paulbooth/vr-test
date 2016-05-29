@@ -112,7 +112,7 @@ function getNumberOfZombiesToSpawn() {
 function toXYPoint(point) {
   return {
     X: point.X / canvas.height,
-    Y: point.Y / canvas.height
+    Y: (canvas.height - point.Y) / canvas.height
   };
 }
 
