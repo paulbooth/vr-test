@@ -28,7 +28,7 @@ public class ZombieController : MonoBehaviour {
 
 	void FixedUpdate ()
 	{
-		rb.AddForce(Vector3.up);
+//		rb.AddForce(Vector3.up);
 	}
 
 	bool IsUpright()
