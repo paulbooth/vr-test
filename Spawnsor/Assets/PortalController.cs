@@ -17,7 +17,12 @@ public class PortalController : MonoBehaviour {
 		}
 
 		if (col.gameObject.Equals(player)) {
-			SceneManager.LoadScene (SceneManager.GetActiveScene ().buildIndex);
+			LoadNextLevel ();
 		}
+	}
+
+	public void LoadNextLevel ()
+	{
+		SceneManager.LoadScene (SceneManager.GetActiveScene ().buildIndex + 1);
 	}
 }
