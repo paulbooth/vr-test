@@ -6,16 +6,6 @@ public class Constructable : NVRInteractableItem
 {
 	public float breakForce = 100f;
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-
 	public override void UseButtonDown()
 	{
 		base.UseButtonDown ();
