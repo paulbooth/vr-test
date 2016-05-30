@@ -123,8 +123,8 @@ function getCentroid(points)
 
 function toXYPoint(point, centroid) {
   return {
-    X: (point.X - centroid.X) / canvas.height * 10,
-    Y: (centroid.Y - point.Y) / canvas.height * 10 // invert Y
+    X: (point.X - centroid.X) / canvas.height,
+    Y: (centroid.Y - point.Y) / canvas.height // invert Y
   };
 }
 
