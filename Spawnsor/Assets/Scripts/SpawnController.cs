@@ -70,7 +70,7 @@ public class SpawnController : MonoBehaviour
 
     private Vector3 getPlayerSpawnObjectPosition()
     {
-        return zombieTarget.position + Vector3.up * 2;
+		return zombieTarget.position + zombieTarget.forward * 0.5f;
     }
 
     public GameObject SpawnGun(Color color, float sizeX, float sizeY, float liveTime)
@@ -121,6 +121,16 @@ public class SpawnController : MonoBehaviour
         {
             renderer.material.color = color;
         }
+
+		Rigidbody rb = go.GetComponent<Rigidbody> ();
+		if (!rb) {
+			Rigidbody r = go.GetComponentInChildren<Rigidbody> ();
+			if (r.gameObject.GetComponent<NVRInteractable> ()) {
+				r.isKinematic = true;
+			}
+		} else {
+			rb.isKinematic = true;
+		}
 
         go.transform.position = getPlayerSpawnObjectPosition();
         go.tag = "PlayerCreated";
