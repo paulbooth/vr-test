@@ -183,6 +183,8 @@ public class SpawnController : MonoBehaviour
 			Debug.Log ("WTF");
 		}
 
+		go.AddComponent<Constructable> ();
+
         TurnIntoPlayerMadeObject(go, color, 0);
     }
 
