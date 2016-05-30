@@ -34,7 +34,7 @@ public class ObjectDetector : MonoBehaviour {
 	}
 
 	bool eligibleForCollision(Collider col) {
-		return col.gameObject.GetComponent<Constructable> ();
+		return col.gameObject.GetComponent<Constructable> () || col.gameObject.GetComponentInParent<Constructable> ();
 	}
 
 	void updateState() {

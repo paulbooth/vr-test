@@ -4,7 +4,7 @@ using NewtonVR;
 
 public class Constructable : NVRInteractableItem
 {
-	public float breakForce = 1000f;
+	public float breakForce = 700f;
 
 	public override void UseButtonDown()
 	{
