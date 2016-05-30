@@ -160,9 +160,18 @@ public class SpawnController : MonoBehaviour
         go.AddComponent<Rigidbody>();
         MeshRenderer r = go.AddComponent<MeshRenderer>();
         r.material = customObjectMaterial;
+		int isConvex = PolygonTriangulator.IsConvex (asList (colliderPoints));
+		if (isConvex == 1) {
+			Debug.Log ("CONVEX");
         MeshCollider col = go.AddComponent<MeshCollider>();
         col.sharedMesh = ExtrudeMeshFromPoints(colliderPoints);
         col.convex = true;
+		} else if (isConvex == -1) {
+			Debug.Log ("CONCAVE");
+			attachCollisionObjects (go, colliderPoints);
+		} else {
+			Debug.Log ("WTF");
+		}
 
         TurnIntoPlayerMadeObject(go, color, 0);
     }
@@ -210,7 +219,7 @@ public class SpawnController : MonoBehaviour
         Vector3[] vertices = new Vector3[4 * points2d.Length];
 
         // Vertex list
-        int sideOffset = 0; //2 * points2d.Length;
+        int sideOffset = 2 * points2d.Length;
         for (int i = 0; i < points2d.Length; i++)
         {
             Vector2 point = points2d[i];
@@ -278,6 +287,55 @@ public class SpawnController : MonoBehaviour
 
         return mesh;
     }
+
+	private void attachCollisionObjects(GameObject go, Vector2[] colliderPoints) {
+		Debug.Log ("colliderPoints:");
+		print2dpts (colliderPoints);
+//		List<List<Vector2>> polys = PolygonTriangulator.Triangulate(asList(colliderPoints));
+//		foreach (List<Vector2> poly in polys) {
+//			Debug.Log ("polyPoints:");
+//			print2dpts (asArray(poly));
+//			GameObject p = new GameObject();
+//			p.transform.parent = go.transform;
+//
+//	        MeshCollider col = p.AddComponent<MeshCollider>();
+//			col.sharedMesh = ExtrudeMeshFromPoints(asArray(poly));
+//	        col.convex = true;
+//		}
+
+		// For every triangle for now...
+		Triangulator tr = new Triangulator(colliderPoints);
+		int[] triIndices = tr.Triangulate();
+		for (int i = 0; i < triIndices.Length; i += 3) {
+			GameObject p = new GameObject();
+			p.transform.parent = go.transform;
+
+			MeshCollider col = p.AddComponent<MeshCollider>();
+			Vector2[] triPoly = new Vector2[3] {
+					colliderPoints[triIndices[i + 0]],
+					colliderPoints[triIndices[i + 1]],
+					colliderPoints[triIndices[i + 2]]
+			};
+			col.sharedMesh = ExtrudeMeshFromPoints(triPoly);
+			col.convex = true;
+		}
+	}
+
+	private List<Vector2> asList(Vector2[] pts) {
+		List<Vector2> res = new List<Vector2>();
+		foreach (Vector2 pt in pts) {
+			res.Add(new Vector2(pt.x, pt.y));
+		}
+		return res;
+	}
+
+	private Vector2[] asArray(List<Vector2> pts) {
+		Vector2[] res = new Vector2[pts.Count];
+		for (int i = 0; i < pts.Count; i++) {
+			res[i] = new Vector2(pts[i].x, pts[i].y);
+		}
+		return res;
+	}
 
     private Color getColorFromJSON(JSONObject data)
     {
