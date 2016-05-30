@@ -5,12 +5,12 @@ using NewtonVR;
 
 public class SpawnController : MonoBehaviour
 {
-
     public GameObject zombie;
     public GameObject cube;
     public GameObject sphere;
     public GameObject gun;
     public GameObject sword;
+    public GameObject grenade;
     public GameObject playerObjectExplosion;
     public Material customObjectMaterial;
     public float playerObjectLiveTime = 5f;
@@ -99,10 +99,14 @@ public class SpawnController : MonoBehaviour
         {
             FadeAndDestroy fad = go.AddComponent<FadeAndDestroy>();
             fad.delayTime = liveTime;
-            fad.explosion = playerObjectExplosion;
+//			fad.explosion = playerObjectExplosion;
         }
 
         NVRInteractableItem interactableItem = go.GetComponent<NVRInteractableItem>();
+        if (!interactableItem)
+        {
+            interactableItem = go.GetComponentInChildren<NVRInteractableItem>();
+        }
         if (!interactableItem)
         {
             go.AddComponent<NVRInteractableItem>();
@@ -296,6 +300,9 @@ public class SpawnController : MonoBehaviour
                 break;
             case "circle":
                 SpawnKnownGameObject(sphere, color, sizeX, sizeY, playerObjectLiveTime);
+                break;
+            case "grenade":
+                SpawnKnownGameObject(grenade, color, sizeX, sizeY, playerObjectLiveTime * 3);
                 break;
             case "sword":
                 SpawnKnownGameObject(sword, color, sizeX, sizeY, playerObjectLiveTime);
