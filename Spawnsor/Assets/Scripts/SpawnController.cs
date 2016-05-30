@@ -89,9 +89,6 @@ public class SpawnController : MonoBehaviour
         GameObject clone = Instantiate(go, getPlayerSpawnObjectPosition(), Quaternion.identity) as GameObject;
         clone.transform.localScale = Vector3.Scale(clone.transform.localScale, new Vector3(sizeX, sizeY, sizeX));
 
-		Rigidbody rb = clone.GetComponent<Rigidbody> ();
-		rb.isKinematic = true;
-
         TurnIntoPlayerMadeObject(clone, color, liveTime);
         return clone;
     }
@@ -124,6 +121,16 @@ public class SpawnController : MonoBehaviour
         {
             renderer.material.color = color;
         }
+
+		Rigidbody rb = go.GetComponent<Rigidbody> ();
+		if (!rb) {
+			Rigidbody r = go.GetComponentInChildren<Rigidbody> ();
+			if (r.gameObject.GetComponent<NVRInteractable> ()) {
+				r.isKinematic = true;
+			}
+		} else {
+			rb.isKinematic = true;
+		}
 
         go.transform.position = getPlayerSpawnObjectPosition();
         go.tag = "PlayerCreated";
