@@ -70,7 +70,7 @@ public class SpawnController : MonoBehaviour
 
     private Vector3 getPlayerSpawnObjectPosition()
     {
-        return zombieTarget.position + Vector3.up * 2;
+		return zombieTarget.position + zombieTarget.forward * 0.5f;
     }
 
     public GameObject SpawnGun(Color color, float sizeX, float sizeY, float liveTime)
@@ -88,6 +88,9 @@ public class SpawnController : MonoBehaviour
     {
         GameObject clone = Instantiate(go, getPlayerSpawnObjectPosition(), Quaternion.identity) as GameObject;
         clone.transform.localScale = Vector3.Scale(clone.transform.localScale, new Vector3(sizeX, sizeY, sizeX));
+
+		Rigidbody rb = clone.GetComponent<Rigidbody> ();
+		rb.isKinematic = true;
 
         TurnIntoPlayerMadeObject(clone, color, liveTime);
         return clone;
