@@ -68,6 +68,16 @@ public class SpawnController : MonoBehaviour {
 		return zombieTarget.position + Vector3.up * 2;
 	}
 
+	public GameObject SpawnGun (Color color, float sizeX, float sizeY, float liveTime)
+	{
+		GameObject gunClone = SpawnKnownGameObject(gun, color, sizeX, sizeY, liveTime);
+		GunController gc = gunClone.GetComponent<GunController>();
+		if (gc) {
+			gc.BulletColor = color;
+		}
+		return gunClone;
+	}
+
 	public GameObject SpawnKnownGameObject(GameObject go, Color color, float sizeX, float sizeY, float liveTime)
 	{
 		GameObject clone = Instantiate (go, getPlayerSpawnObjectPosition (), Quaternion.identity) as GameObject;
@@ -261,7 +271,7 @@ public class SpawnController : MonoBehaviour {
 			SpawnKnownGameObject (sword, color, sizeX, sizeY, playerObjectLiveTime);
 			break;
 		case "gun":
-			SpawnKnownGameObject (gun, color, sizeX, sizeY, playerObjectLiveTime * 3);
+			SpawnGun (color, sizeX, sizeY, playerObjectLiveTime * 3);
 			break;
 		default:
 			Debug.LogError ("Unknown drawn object: " + name);
