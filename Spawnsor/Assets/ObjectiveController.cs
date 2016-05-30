@@ -4,6 +4,7 @@ using System.Collections;
 public class ObjectiveController : MonoBehaviour {
 
 	public SpawnController spawnController;
+	public MagicDoorController magicDoor;
 	public float completeTime = 3f;
 
 	private float allCompleteStartTime = 0f;
@@ -25,7 +26,8 @@ public class ObjectiveController : MonoBehaviour {
 			if (allCompleteStartTime > 0f) {
 				if (Time.time >= allCompleteStartTime + completeTime) {
 					objectiveMet = true;
-					spawnController.SpawnGun (Color.green, 10, 10, 0);
+//					spawnController.SpawnGun (Color.green, 10, 10, 0);
+					magicDoor.Enable();
 				}
 			} else {
 				allCompleteStartTime = Time.time;
