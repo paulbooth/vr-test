@@ -10,6 +10,7 @@ public class SpawnController : MonoBehaviour {
 	public GameObject sphere;
 	public GameObject gun;
 	public GameObject sword;
+	public GameObject grenade;
 	public GameObject playerObjectExplosion;
 	public Material customObjectMaterial;
 	public float playerObjectLiveTime = 5f;
@@ -80,6 +81,7 @@ public class SpawnController : MonoBehaviour {
 
 	public GameObject SpawnKnownGameObject(GameObject go, Color color, float sizeX, float sizeY, float liveTime)
 	{
+		Debug.Log ("Spawning known game object");
 		GameObject clone = Instantiate (go, getPlayerSpawnObjectPosition (), Quaternion.identity) as GameObject;
 		clone.transform.localScale = Vector3.Scale(clone.transform.localScale, new Vector3(sizeX, sizeY, sizeX));
 
@@ -92,10 +94,13 @@ public class SpawnController : MonoBehaviour {
 		if (liveTime > 0) {
 			FadeAndDestroy fad = go.AddComponent<FadeAndDestroy> ();
 			fad.delayTime = liveTime;
-			fad.explosion = playerObjectExplosion;
+//			fad.explosion = playerObjectExplosion;
 		}
 
 		NVRInteractableItem interactableItem = go.GetComponent<NVRInteractableItem> ();
+		if (!interactableItem) {
+			interactableItem = go.GetComponentInChildren<NVRInteractableItem> ();
+		}
 		if (!interactableItem) {
 			go.AddComponent<NVRInteractableItem> ();
 		}
@@ -266,6 +271,9 @@ public class SpawnController : MonoBehaviour {
 			break;
 		case "circle":
 			SpawnKnownGameObject (sphere, color, sizeX, sizeY, playerObjectLiveTime);
+			break;
+		case "grenade":
+			SpawnKnownGameObject (grenade, color, sizeX, sizeY, playerObjectLiveTime * 3);
 			break;
 		case "sword":
 			SpawnKnownGameObject (sword, color, sizeX, sizeY, playerObjectLiveTime);
