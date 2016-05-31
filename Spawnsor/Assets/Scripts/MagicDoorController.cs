@@ -11,7 +11,6 @@ public class MagicDoorController : MonoBehaviour {
 
 	public void Enable () {
 		portal.SetActive (true);
-		Debug.Log ("Enabled a door");
 	}
 
 	public void Disable() {
