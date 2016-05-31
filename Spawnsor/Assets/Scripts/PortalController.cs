@@ -9,6 +9,7 @@ public class PortalController : MonoBehaviour {
 	public int numLevels = 2;
 
 	private bool loading = false;
+	private bool ready = false;
 
 	void OnTriggerEnter (Collider col) {
 		if (!isActiveAndEnabled) {
@@ -31,8 +32,13 @@ public class PortalController : MonoBehaviour {
 		}
 		loading = true;
 		int nextLevel = SceneManager.GetActiveScene ().buildIndex + 1;
+		Debug.Log ("Loading next level: with max levels:");
+		Debug.Log (nextLevel);
+		Debug.Log (numLevels);
 		if (nextLevel < numLevels) {
 			SceneManager.LoadScene (nextLevel);
+		} else {
+			Debug.Log ("Game Over!");
 		}
 	}
 
@@ -52,6 +58,7 @@ public class PortalController : MonoBehaviour {
 			// Loading completed
 			if (ao.progress == 0.9f)
 			{
+				ready = true;
 				Debug.Log("Press a key to start");
 				if (Input.anyKey)
 					ao.allowSceneActivation = true;
